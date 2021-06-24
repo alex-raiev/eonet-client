@@ -6,8 +6,7 @@ export const baseApiUrl = process.env.REACT_APP_APIURL;
 
 export interface EventsState {
     isLoading: boolean;
-    order: string;
-    prevOrder: string;
+<<<<<<< HEAD
     events: Event[];
 }
 
@@ -17,11 +16,19 @@ export interface DetailState {
     selected: Event;
 }
 
+=======
+    isLoaded: boolean;
+    selected: Event | undefined;
+    events: Event[];
+}
+
+>>>>>>> init commit
 export interface Event {
     id: string;
     title: string;
     description: string;
     link: string;
+<<<<<<< HEAD
     categories: Category[];
     sources: Source[];
 }
@@ -39,6 +46,8 @@ export interface Source {
 export interface Geometry {
     id: number;
     title: string;
+=======
+>>>>>>> init commit
 }
 
 // action
@@ -50,43 +59,45 @@ interface RequestEventsAction {
 interface ReceiveEventsAction {
     type: 'RECEIVE_EVENTS';
     events: Event[];
-    order: string;
 }
 
 interface RequestEventDetailsAction {
     type: 'REQUEST_EVENT_DETAILS';
+<<<<<<< HEAD
     id: string;
+=======
+>>>>>>> init commit
 }
 
 interface ReceiveEventDetailsAction {
     type: 'RECEIVE_EVENT_DETAILS';
+<<<<<<< HEAD
     id: string;
     selected: Event;
 }
 
-interface ChangeOrderAction{
-    type: 'CHANGE_ORDER';
-    order: string;
-    prevOrder: string;
+type KnownAction = RequestEventsAction | ReceiveEventsAction
+=======
+    selected: Event;
 }
 
-
-type KnownAction = RequestEventsAction | ReceiveEventsAction
-    | RequestEventDetailsAction | ReceiveEventDetailsAction | ChangeOrderAction;
+type KnownAction = RequestEventsAction | ReceiveEventsAction 
+>>>>>>> init commit
+    | RequestEventDetailsAction | ReceiveEventDetailsAction;
 
 // action creators
 
 export const actionCreators = {
     requestEvents: (): AppThunkAction<KnownAction> => (dispatch, getState) => {
         const appState = getState();
-        if (appState && appState.events && appState.events.prevOrder !== appState.events.order) {
-            const order =appState.events.order;
-            fetch(baseApiUrl + `/api/v1/eonet/all${appState.events.order}`)
+        if (appState && appState.events && appState.events) {
+            fetch(baseApiUrl + `/api/v1/eonet/all`)
                 .then(response => response.json() as Promise<Event[]>)
                 .then(data => {
-                    dispatch({ type: 'RECEIVE_EVENTS', events: data, order: order});
+                    dispatch({ type: 'RECEIVE_EVENTS', events: data });
                 });
 
+<<<<<<< HEAD
             dispatch({ type: 'REQUEST_EVENTS' });
         }
     },
@@ -101,18 +112,10 @@ export const actionCreators = {
 
             dispatch({ type: 'REQUEST_EVENT_DETAILS', id: _id });
         }
-    },
-    setOrder: (): AppThunkAction<KnownAction> => (dispatch, getState) => {
-        const appState = getState();
-        if(appState && appState.events){
-            const newOrder = appState.events.order.includes("asc") ? "?$orderby=Title desc" : "?$orderby=Title asc";
-            dispatch({ type: 'CHANGE_ORDER', order:  newOrder, prevOrder: appState.events.order});
-        }
     }
 };
 
-const unloadedEventState: EventsState = { events: [], isLoading: false, order: "?$orderby=Title asc", prevOrder: "?$orderby=Title desc"};
-
+const unloadedEventState: EventsState = { events: [], isLoading: false };
 const unloadedDetailState: DetailState = {
     selected: {
         id: "",
@@ -131,6 +134,33 @@ const unloadedDetailState: DetailState = {
 export const eventReducer: Reducer<EventsState> = (state: EventsState | undefined, incomingAction: Action): EventsState => {
     if (state === undefined) {
         return unloadedEventState;
+=======
+            dispatch({ type: 'REQUEST_EVENTS'});
+        }
+    },
+    requestEventDetails : (id : string) : AppThunkAction<KnownAction> => (dispatch, getState) => {
+        const appState = getState();
+        if (appState && appState.events && appState.events.events.length === 0) {
+            fetch(baseApiUrl + `/api/v1/eonet/details?id` + id)
+                .then(response => response.json() as Promise<Event>)
+                .then(data => {
+                    dispatch({ type: 'RECEIVE_EVENT_DETAILS', selected: data });
+                });
+
+            dispatch({ type: 'REQUEST_EVENT_DETAILS'});
+        }
+
+    }
+};
+
+const unloadedState: EventsState = { events: [], selected: undefined, isLoading: false, isLoaded: false };
+
+// reducer
+
+export const reducer: Reducer<EventsState> = (state: EventsState | undefined, incomingAction: Action): EventsState => {
+    if (state === undefined) {
+        return unloadedState;
+>>>>>>> init commit
     }
 
     const action = incomingAction as KnownAction;
@@ -138,23 +168,13 @@ export const eventReducer: Reducer<EventsState> = (state: EventsState | undefine
         case 'REQUEST_EVENTS':
             return {
                 events: state.events,
-                order: state.order,
-                prevOrder: state.prevOrder,
+<<<<<<< HEAD
                 isLoading: true
             };
         case 'RECEIVE_EVENTS':
             return {
                 events: action.events,
-                order: action.order,
-                prevOrder: action.order,
                 isLoading: false
-            };    
-        case 'CHANGE_ORDER':
-            return {
-                events: state.events,
-                isLoading: false,
-                order: action.order,
-                prevOrder: action.prevOrder
             };
     }
 
@@ -178,9 +198,34 @@ export const detailReducer: Reducer<DetailState> = (state: DetailState | undefin
                 selected: action.selected,
                 id: action.selected.id,
                 isLoading: false
+=======
+                selected: undefined,
+                isLoading: true,
+                isLoaded: false
+            };
+        case 'RECEIVE_EVENTS':
+            return {   
+                events: action.events,    
+                selected: undefined,
+                isLoading: false,
+                isLoaded: true
+            };    
+        case 'REQUEST_EVENT_DETAILS':
+            return {
+                events: state.events,
+                selected: state.selected,
+                isLoading: true,
+                isLoaded: false
+            };
+        case 'RECEIVE_EVENT_DETAILS':
+            return {
+                events: [],
+                selected: action.selected,
+                isLoading: false,
+                isLoaded: true
+>>>>>>> init commit
             };
     }
 
     return state;
 };
-
