@@ -5,53 +5,73 @@ import { ApplicationState } from '../store';
 import * as EventsStore from '../store/Events';
 
 type EventProps =
-    EventsStore.EventsState // ... state we've requested from the Redux store
-  & typeof EventsStore.actionCreators // ... plus action creators we've requested
-  & RouteComponentProps<{ itemID: string }>; // ... plus incoming routing parameters
+    EventsStore.DetailState // ... state we've requested from the Redux store
+    & typeof EventsStore.actionCreators // ... plus action creators we've requested
+    & RouteComponentProps<{ itemID: string }>; // ... plus incoming routing parameters
 
 class EventDetails extends React.PureComponent<EventProps> {
     public componentDidMount() {
-      var id = this.props.match.params.itemID;
-      this.props.requestEventDetails(id);
+        this.requestDetails();
+    }
+
+    public componentDidUpdate() {
+        this.requestDetails();
+    }
+
+    private requestDetails() {
+        this.props.requestEventDetails(this.props.match.params.itemID);
     }
 
     public render() {
         return (
-          <React.Fragment>
-            {this.renderEventDetails()}
-          </React.Fragment>
-        );  
+            <React.Fragment>
+                {this.renderEventDetails()}
+            </React.Fragment>
+        );
     }
 
     private renderEventDetails() {
         return (
-            <div>{this.props.match.params.itemID}
-                <div>{this.props.selected.title}</div>
-                <div>{this.props.selected.description}</div>
-                <div>{this.props.selected.link}</div>
-                <div>
-            <table className='table text-light' aria-labelledby="tabelLabel">
-              <thead>
-                <tr>
-                  <th><i className='icon-arrow-up'></i></th>
-                  <th>Title</th>
-                </tr>
-              </thead>
-              <tbody>
-                {this.props.selected.categories.map((item: EventsStore.Category) =>
-                  <tr key={item.id}>
-                    <td>{item.title}</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      );
-      }
+            <div>
+                <div className="header">
+                <h3>{this.props.selected!.title}</h3>
+                <h4>{this.props.selected.description}</h4>
+                </div>
+                <table className='table text-light' aria-labelledby="tabelLabel">
+                    <thead>
+                        <tr>
+                            <th>Categories</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {this.props.selected.categories.map((item: EventsStore.Category) =>
+                            <tr key={item.id}>
+                                <td>{item.title}</td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+                <table className='table text-light' aria-labelledby="tabelLabel">
+                    <thead>
+                        <tr>
+                            <th>Sources</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {this.props.selected.sources.map((item: EventsStore.Source) =>
+                            <tr key={item.id}>
+                                <td>{item.url}</td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+
+            </div>
+        );
+    }
 }
 
 export default connect(
-    (state: ApplicationState) => state.events,
+    (state: ApplicationState) => state.selected,
     EventsStore.actionCreators
-  )(EventDetails as any);
+)(EventDetails as any);

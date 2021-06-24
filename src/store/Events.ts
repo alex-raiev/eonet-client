@@ -6,9 +6,13 @@ export const baseApiUrl = process.env.REACT_APP_APIURL;
 
 export interface EventsState {
     isLoading: boolean;
-    isLoaded: boolean;
-    selected: Event | undefined;
     events: Event[];
+}
+
+export interface DetailState {
+    isLoading: boolean;
+    id: string;
+    selected: Event;
 }
 
 export interface Event {
@@ -20,17 +24,17 @@ export interface Event {
     sources: Source[];
 }
 
-export interface Category{
+export interface Category {
     id: number;
     title: string;
 }
 
-export interface Source{
+export interface Source {
     id: string;
     url: string;
 }
 
-export interface Geometry{
+export interface Geometry {
     id: number;
     title: string;
 }
@@ -48,14 +52,16 @@ interface ReceiveEventsAction {
 
 interface RequestEventDetailsAction {
     type: 'REQUEST_EVENT_DETAILS';
+    id: string;
 }
 
 interface ReceiveEventDetailsAction {
     type: 'RECEIVE_EVENT_DETAILS';
+    id: string;
     selected: Event;
 }
 
-type KnownAction = RequestEventsAction | ReceiveEventsAction 
+type KnownAction = RequestEventsAction | ReceiveEventsAction
     | RequestEventDetailsAction | ReceiveEventDetailsAction;
 
 // action creators
@@ -70,31 +76,42 @@ export const actionCreators = {
                     dispatch({ type: 'RECEIVE_EVENTS', events: data });
                 });
 
-            dispatch({ type: 'REQUEST_EVENTS'});
+            dispatch({ type: 'REQUEST_EVENTS' });
         }
     },
-    requestEventDetails : (id : string) : AppThunkAction<KnownAction> => (dispatch, getState) => {
+    requestEventDetails: (_id: string): AppThunkAction<KnownAction> => (dispatch, getState) => {
         const appState = getState();
-        if (appState && appState.events && appState.events.events.length === 0) {
-            fetch(baseApiUrl + `/api/v1/eonet/details?id` + id)
+        if (appState && appState.selected && _id !== appState.selected.id) {
+            fetch(baseApiUrl + `/api/v1/eonet/details?id=${_id}`)
                 .then(response => response.json() as Promise<Event>)
                 .then(data => {
-                    dispatch({ type: 'RECEIVE_EVENT_DETAILS', selected: data });
+                    dispatch({ type: 'RECEIVE_EVENT_DETAILS', selected: data, id: _id });
                 });
 
-            dispatch({ type: 'REQUEST_EVENT_DETAILS'});
+            dispatch({ type: 'REQUEST_EVENT_DETAILS', id: _id });
         }
-
     }
 };
 
-const unloadedState: EventsState = { events: [], selected: undefined, isLoading: false, isLoaded: false };
+const unloadedEventState: EventsState = { events: [], isLoading: false };
+const unloadedDetailState: DetailState = {
+    selected: {
+        id: "",
+        description: "",
+        link: "",
+        title: "",
+        categories: [],
+        sources: [],
+    },
+    id: "",
+    isLoading: false
+};
 
 // reducer
 
-export const reducer: Reducer<EventsState> = (state: EventsState | undefined, incomingAction: Action): EventsState => {
+export const eventReducer: Reducer<EventsState> = (state: EventsState | undefined, incomingAction: Action): EventsState => {
     if (state === undefined) {
-        return unloadedState;
+        return unloadedEventState;
     }
 
     const action = incomingAction as KnownAction;
@@ -102,30 +119,35 @@ export const reducer: Reducer<EventsState> = (state: EventsState | undefined, in
         case 'REQUEST_EVENTS':
             return {
                 events: state.events,
-                selected: undefined,
-                isLoading: true,
-                isLoaded: false
+                isLoading: true
             };
         case 'RECEIVE_EVENTS':
-            return {   
-                events: action.events,    
-                selected: undefined,
-                isLoading: false,
-                isLoaded: true
-            };    
+            return {
+                events: action.events,
+                isLoading: false
+            };
+    }
+
+    return state;
+};
+
+export const detailReducer: Reducer<DetailState> = (state: DetailState | undefined, incomingAction: Action): DetailState => {
+    if (state === undefined) {
+        return unloadedDetailState;
+    }
+    const action = incomingAction as KnownAction;
+    switch (action.type) {
         case 'REQUEST_EVENT_DETAILS':
             return {
-                events: state.events,
                 selected: state.selected,
-                isLoading: true,
-                isLoaded: false
+                id: state.id,
+                isLoading: true
             };
         case 'RECEIVE_EVENT_DETAILS':
             return {
-                events: [],
                 selected: action.selected,
-                isLoading: false,
-                isLoaded: true
+                id: action.selected.id,
+                isLoading: false
             };
     }
 
